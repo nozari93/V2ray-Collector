@@ -33,24 +33,7 @@ jobs:
       
       # --- مدیریت شمارنده برای الگوی Classic, Classic, App, App ---
      
-        run: |
-          COUNTER_FILE="data/token_state.txt"
-          if [ ! -f "$COUNTER_FILE" ]; then
-            echo "0" > "$COUNTER_FILE"
-          fi
-          COUNTER=$(cat "$COUNTER_FILE")
-          echo "Current counter: $COUNTER"
-
-          if [ "$COUNTER" -eq 0 ] || [ "$COUNTER" -eq 1 ]; then
-            echo "token=${{ secrets.GH_TOKEN }}" >> $GITHUB_OUTPUT
-            echo "Using Classic token (counter $COUNTER)"
-          else
-            echo "token=${{ steps.app-token.outputs.token }}" >> $GITHUB_OUTPUT
-            echo "Using GitHub App token (counter $COUNTER)"
-          fi
-
-          NEXT=$(( (COUNTER + 1) % 4 ))
-          echo "$NEXT" > "$COUNTER_FILE"
+      
 
       - name: Run collector
         env:
