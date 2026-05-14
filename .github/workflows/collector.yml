@@ -30,15 +30,38 @@ jobs:
       - name: Run Telegram Collector
         run: python src/telegram_collector.py
 
-      
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       # --- مدیریت شمارنده برای الگوی Classic, Classic, App, App ---
-     
-      
+      - name: Select token based on counter
+        id: select-token
+        run: |
+          COUNTER_FILE="data/token_state.txt"
+          if [ ! -f "$COUNTER_FILE" ]; then
+            echo "0" > "$COUNTER_FILE"
+          fi
+          COUNTER=$(cat "$COUNTER_FILE")
+          echo "Current counter: $COUNTER"
+
+          if [ "$COUNTER" -eq 0 ] || [ "$COUNTER" -eq 1 ]; then
+            echo "token=${{ secrets.GH_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "Using Classic token (counter $COUNTER)"
+          else
+            echo "token=${{ steps.app-token.outputs.token }}" >> $GITHUB_OUTPUT
+            echo "Using GitHub App token (counter $COUNTER)"
+          fi
+
+          NEXT=$(( (COUNTER + 1) % 4 ))
+          echo "$NEXT" > "$COUNTER_FILE"
 
       - name: Run collector
         env:
-          GITHUB_TOKEN: GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
+          GITHUB_TOKEN: ${{ steps.select-token.outputs.token }}
           RUN_MODE: frequent
           MAX_AGE_HOURS: 0.5
         run: python src/collector_git.py
